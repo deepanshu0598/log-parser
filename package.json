@@ -11,12 +11,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/deepanshu0598/log-parser-sde-assignment.git"
+    "url": "https://github.com/deepanshu0598/log-parser"
   },
-  "bugs": {
-    "url": "https://github.com/deepanshu0598/log-parser-sde-assignment/issues"
-  },
-  "homepage": "https://github.com/deepanshu0598/log-parser-sde-assignment#readme",
   "keywords": [
     "node.js",
     "log",
