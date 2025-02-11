@@ -1,51 +1,32 @@
-// Import required modules
-const { parseLogFile } = require('./utils/fileParser');         // Function to parse the log file
-const { generateHistogram } = require('./utils/histogram');     // Function to generate histogram from data
-const { calculateTopContributors } = require('./utils/topContributors'); // Function to calculate top contributors
-const chalk = require('chalk');                                // For colored console output
-const fs = require('fs');                                      // File system module to read/write files
+const express = require('express');
+const fs = require('fs');
+const { parseLogFile } = require('./utils/fileParser');
+const { generateHistogram } = require('./utils/histogram');
+const { calculateTopContributors } = require('./utils/topContributors');
 
-/**
- * Main function to execute the log file parsing, histogram generation,
- * and writing the output to a file.
- */
-function main() {
-  const logFilePath = 'sample-log-file.log';  // Path to the log file
+const app = express();
+const PORT = 3000;
 
-  // Check if the log file exists. If not, show an error and exit.
+app.use(express.static('dashboard')); // Serve static files from the 'dashboard' folder
+
+app.get('/data', (req, res) => {
+  const logFilePath = 'sample-log-file.log';
   if (!fs.existsSync(logFilePath)) {
-    console.error(chalk.red('❌ Log file not found! Please add a log file.'));
-    process.exit(1);  // Exit the program with an error code
+    return res.status(404).json({ error: 'Log file not found!' });
   }
 
-  // Parse the log file to extract IP addresses and hours of traffic
   const { ipList, hourList } = parseLogFile(logFilePath);
 
-  // Initialize an empty string to collect all output for writing to the file
-  let output = '';
+  const data = {
+    ipHistogram: generateHistogram(ipList),
+    hourlyHistogram: generateHistogram(hourList),
+    topIPs: calculateTopContributors(generateHistogram(ipList), 85),
+    topHours: calculateTopContributors(generateHistogram(hourList), 70),
+  };
 
-  // Generate and add IP address histogram to the output string
-  output += '\nIP Address Histogram:\n';
-  output += JSON.stringify(generateHistogram(ipList), null, 2) + '\n';
+  res.json(data); // Return the parsed data as JSON
+});
 
-  // Generate and add hourly traffic histogram to the output string
-  output += '\nHourly Traffic Histogram:\n';
-  output += JSON.stringify(generateHistogram(hourList), null, 2) + '\n';
-
-  // Calculate and add the top IP addresses contributing to 85% of traffic
-  output += '\nTop IPs contributing to 85% traffic:\n';
-  output += JSON.stringify(calculateTopContributors(generateHistogram(ipList), 85), null, 2) + '\n';
-
-  // Calculate and add the top hours contributing to 70% of traffic
-  output += '\nTop Hours contributing to 70% traffic:\n';
-  output += JSON.stringify(calculateTopContributors(generateHistogram(hourList), 70), null, 2) + '\n';
-
-  // Write the collected output string to a file named "output.txt"
-  fs.writeFileSync('output.txt', output);
-
-  // Log a success message in the console
-  console.log(chalk.green('✅ Data has been written to output.txt successfully!'));
-}
-
-// Call the main function to execute the program
-main();
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
